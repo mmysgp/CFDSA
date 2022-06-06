@@ -1,0 +1,29 @@
+version: '3'
+services:
+  web:
+    env_file:
+      - nw.env
+    image: "stackupiss/northwind-app:v1"
+    container_name: myapp
+    ports:
+      - "8080:3000"
+    networks:
+      - custom-net
+    depends_on:
+      - "db"
+  db:
+    image: "stackupiss/northwind-db:v1"
+    container_name: mydb
+    ports:
+      - ":3306"
+    networks:
+      - custom-net
+    volumes:
+      - myvol:/var/lib/mysql
+
+networks:
+  custom-net:
+    name: mynet
+
+volumes:
+  myvol:
