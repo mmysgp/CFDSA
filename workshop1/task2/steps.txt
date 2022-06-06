@@ -1,0 +1,28 @@
+# create network
+docker network create mynet
+
+# create a volume
+docker volume create nw-vol
+
+# create DB container with the volume
+docker run -d \
+  --name mydb --network mynet \
+  -v nw-vol:/var/lib/mysql \
+  stackupiss/northwind-db:v1
+
+# single line command for windows
+# docker run -d --name mydb --network mynet -v nw-vol:/var/lib/mysql stackupiss/northwind-db:v1
+
+# container for network troubleshoot
+docker run --rm -ti --network nw-net nicolaka/netshoot:v0.5 bash
+
+# run the web app in the same network
+docker run -d -p 8080:3000 \
+  --name myapp --network mynet \
+  -e DB_HOST=mydb \
+  -e DB_USER=root \
+  -e DB_PASSWORD=changeit \
+  stackupiss/northwind-app:v1
+
+# single line command for windows
+#  docker run -d -p 8080:3000 --name myapp --network mynet -e DB_HOST=mydb -e DB_USER=root -e DB_PASSWORD=changeit  stackupiss/northwind-app:v1

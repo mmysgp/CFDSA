@@ -1,0 +1,13 @@
+#create volume
+docker volume create myvol
+
+# pull images from dockerhub
+docker pull stackupiss/northwind-db:v1
+docker pull stackupiss/northwind-app:v1
+docker pull nicolaka/netshoot:v0.5
+
+# run container DB to mount a local volume
+docker run -d -p 3306:3306 -v myvol:/var/lib/mysql stackupiss/northwind-db:v1
+
+# run network troubleshoot container
+docker run --rm -ti nicolaka/netshoot:v0.5 bash
