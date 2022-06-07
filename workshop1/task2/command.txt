@@ -8,3 +8,4 @@ docker pull nicolaka/netshoot:v0.5
 
 # run container DB to mount a local volume
 docker run -d -p 3306:3306 -v myvol:/var/lib/mysql stackupiss/northwind-db:v1
+
