@@ -1,0 +1,166 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bgg-app-cm
+  labels:
+    name: bgg-app-cm
+data:
+  BGG_DB_USER: root
+  BGG_DB_HOST: bggdb-svc.bggns.svc.cluster.local
+
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bgg-app-secret
+type: Opaque
+data:
+  BGG_DB_PASSWORD: Y2hhbmdlaXQ=
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bggapp-deploy-v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      name: bgg-app-po-v1
+  template:
+    metadata:
+      name: bgg-app-po-v1
+      labels:
+        name: bgg-app-po-v1
+    spec:
+      containers:
+      - name: bgg-app-container
+        image: stackupiss/bgg-backend:v1
+        args:
+        - --prefix
+        - /v1
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: bgg-app-cm
+        - secretRef:
+            name: bgg-app-secret
+        ports:
+        - name: bgg-app-port
+          containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+            scheme: HTTP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bggapp-svc-v1
+  labels:
+    name: bggapp-svc-v1
+spec:
+  type: ClusterIP
+  selector:
+    name: bgg-app-po-v1
+  ports:
+  - port: 8080
+    targetPort: bgg-app-port
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bggapp-deploy-v2
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      name: bgg-app-po-v2
+  template:
+    metadata:
+      name: bgg-app-po-v2
+      labels:
+        name: bgg-app-po-v2
+    spec:
+      containers:
+      - name: bgg-app-container
+        image: stackupiss/bgg-backend:v2
+        args:
+        - --prefix
+        - /v2
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: bgg-app-cm
+        - secretRef:
+            name: bgg-app-secret
+        ports:
+        - name: bgg-app-port
+          containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+            scheme: HTTP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bggapp-svc-v2
+  labels:
+    name: bggapp-svc-v2
+spec:
+  type: ClusterIP
+  selector:
+    name: bgg-app-po-v2
+  ports:
+  - port: 8080
+    targetPort: bgg-app-port
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bgg-ingress
+  labels:
+    name: bgg-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: "5"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: bgg.188.166.198.130.nip.io
+    http:
+      paths:
+      - path: /v1
+        pathType: Prefix
+        backend:
+          service:
+            name: bggapp-svc-v1
+            port: 
+              number: 8080
+      - path: /v2
+        pathType: Prefix
+        backend:
+          service:
+            name: bggapp-svc-v2
+            port: 
+              number: 8080
