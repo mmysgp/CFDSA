@@ -1,13 +1,13 @@
 ---
 apiVersion: v1
-kind: Service 
+kind: Service
 metadata:
-  name: wpdb-svc 
+  name: wpdb-svc
   labels:
-    app: wp 
-    name: wpdb-svc 
+    app: wp
+    name: wpdb-svc
 spec:
-  clusterIP: None 
+  clusterIP: None
   selector: 
     app: wp
     name: wpdb-pod
@@ -16,12 +16,12 @@ spec:
     targetPort: 3306
 ---
 apiVersion: v1
-kind: Service 
+kind: Service
 metadata:
-  name: wpdb-master-svc 
+  name: wpdb-master-svc
   labels:
-    app: wp 
-    name: wpdb-master-svc 
+    app: wp
+    name: wpdb-master-svc
 spec:
   type: ClusterIP
   selector: 
@@ -31,8 +31,8 @@ spec:
   - port: 3306
     targetPort: 3306
 ---
-apiVersion: apps/v1 
-kind: StatefulSet 
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: wpdb-sts
   labels:
@@ -40,14 +40,14 @@ metadata:
     name: wpdb-sts
 spec:
   replicas: 1
-  serviceName: wpdb-svc 
+  serviceName: wpdb-svc
   selector:
     matchLabels:
       app: wp
       name: wpdb-pod
   volumeClaimTemplates:
-  - apiVersion: v1 
-    kind: PersistentVolumeClaim  
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
     metadata:
       name: wpdb-pvc
       labels:
@@ -61,7 +61,7 @@ spec:
       storageClassName: do-block-storage
   template: 
     metadata: 
-      name: wpdb-pod 
+      name: wpdb-pod
       labels:
         app: wp
         name: wpdb-pod
@@ -72,25 +72,25 @@ spec:
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
-            name: wpdb-cm 
+            name: wpdb-cm
         - secretRef:
-            name: wpdb-secret 
+            name: wpdb-secret
         volumeMounts: 
-        - name: wpdb-pvc 
+        - name: wpdb-pvc
           mountPath: /var/lib/mysql
         
 ---
 apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy 
+kind: NetworkPolicy
 metadata:
   name: wpdb-netpol
   labels:
-    app: wp 
-    name: wpdb-netpol 
+    app: wp
+    name: wpdb-netpol
 spec:
   podSelector:
     matchLabels:
-      app: wp 
+      app: wp
       name: wpdb-pod
   policyTypes:
   - Ingress

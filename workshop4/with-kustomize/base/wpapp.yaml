@@ -1,11 +1,11 @@
 --- 
 apiVersion: apps/v1 
-kind: Deployment 
+kind: Deployment
 metadata: 
-  name: wpapp-deploy 
+  name: wpapp-deploy
   labels: 
-    app: wp 
-    name: wpapp-deploy 
+    app: wp
+    name: wpapp-deploy
 spec: 
   replicas: 1
   selector: 
@@ -14,14 +14,14 @@ spec:
       name: wpapp-pod
   template:
     metadata:
-      name: wpapp-pod 
+      name: wpapp-pod
       labels:
         app: wp
-        name: wpapp-pod 
+        name: wpapp-pod
     spec:
       containers:
       - name: wpapp-container
-        image: wordpress:5 
+        image: wordpress:5
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -32,17 +32,17 @@ spec:
         - containerPort: 80
 
 ---
-apiVersion: v1 
+apiVersion: v1
 kind: Service
 metadata:
-  name: wpapp-svc 
+  name: wpapp-svc
   labels: 
     app: wp
     name: wpapp-svc
 spec:
   type: ClusterIP 
   selector:
-    app: wp 
+    app: wp
     name: wpapp-pod
   ports:
   - port: 80 
@@ -50,20 +50,20 @@ spec:
 
 --- 
 apiVersion: networking.k8s.io/v1
-kind: Ingress 
+kind: Ingress
 metadata:
-  name: wpapp-ing 
+  name: wpapp-ing
   labels:
-    app: wp 
-    name: wpapp-ing 
+    app: wp
+    name: wpapp-ing
 spec:
-  ingressClassName: nginx 
+  ingressClassName: nginx
   rules:
   - host: tenant-188.166.198.130.nip.io
     http: 
       paths: 
       - path: /
-        pathType: Prefix 
+        pathType: Prefix
         backend:
           service: 
             name: wpapp-svc
@@ -87,17 +87,16 @@ spec:
   - Ingress
   - Egress
   ingress:
-  - {}
-# - from: 
-#   - namespaceSelector: 
-#       matchLabels:
-#         kubernetes.io/metadata.name: ingress-nginx
-#         name: ingress-nginx
-#     podSelector:
-#       matchLabels:
-#         app.kubernetes.io/component: controller
-#         app.kubernetes.io/instance: ingress-nginx
-#         app.kubernetes.io/name: ingress-nginx
+  - from: 
+    - namespaceSelector: 
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+          name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: controller
+          app.kubernetes.io/instance: ingress-nginx
+          app.kubernetes.io/name: ingress-nginx
   egress:
   - to:
     - podSelector:
