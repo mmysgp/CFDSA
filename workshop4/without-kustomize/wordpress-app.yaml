@@ -1,20 +1,4 @@
 ---
-#wordpress content volume
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: wdp-app-vol
-  labels:
-    name: wdp-app-vol
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: do-block-storage
-
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -53,17 +37,10 @@ spec:
       labels:
         name: wdp-app-po
     spec:
-      volumes:
-        - name: wdpapp-pvc-vol
-          persistentVolumeClaim:
-            claimName: wdp-app-vol
       containers:
       - name: wdp-app-container
         image: wordpress:latest
         imagePullPolicy: IfNotPresent
-        volumeMounts:
-        - name: wdpapp-pvc-vol
-          mountPath: /var/www/html
         envFrom:
         - configMapRef:
             name: wdp-app-cm
