@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mycluster-secret
+type: Opaque
+data:
+  ROOT_PASSWORD: Y2hhbmdlaXQ=
+
+---
+#create mysql cluster for HA
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlCluster
+metadata:
+  name: mycluster-mysql
+  labels:
+    name: mycluster-mysql
+spec:
+  replicas: 2
+  secretName: mycluster-secret
+  volumeSpec:
+    persistentVolumeClaim:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: do-block-storage
+      resources:
+        requests:
+          storage: 1Gi
+
+---
+#create a wordpress database in mysql cluster
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlDatabase
+metadata:
+  name: wordpressdb
+  labels:
+    name: wordpressdb
+spec:
+  database: wordpressdb
+  clusterRef: 
+    name: mycluster-mysql
+    namespace: wpns

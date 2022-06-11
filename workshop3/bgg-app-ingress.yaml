@@ -106,6 +106,10 @@ spec:
         - --prefix
         - /v2
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128M
         envFrom:
         - configMapRef:
             name: bgg-app-cm

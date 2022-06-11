@@ -1,0 +1,112 @@
+---
+#wordpress content volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wdp-app-vol
+  labels:
+    name: wdp-app-vol
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: do-block-storage
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wdp-app-cm
+  labels:
+    name: wdp-app-cm
+data:
+  WORDPRESS_DB_HOST: mycluster-mysql-mysql-master.wpns.svc.cluster.local
+  WORDPRESS_DB_USER: root
+  WORDPRESS_DB_NAME: mysql
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wdp-app-secret
+type: Opaque
+data:
+  WORDPRESS_DB_PASSWORD: Y2hhbmdlaXQ=
+
+
+---
+#deployment for wordpress app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wdp-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: wdp-app-po
+  template:
+    metadata:
+      name: wdp-app-po
+      labels:
+        name: wdp-app-po
+    spec:
+      volumes:
+        - name: wdpapp-pvc-vol
+          persistentVolumeClaim:
+            claimName: wdp-app-vol
+      containers:
+      - name: wdp-app-container
+        image: wordpress:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: wdpapp-pvc-vol
+          mountPath: /var/www/html
+        envFrom:
+        - configMapRef:
+            name: wdp-app-cm
+        - secretRef:
+            name: wdp-app-secret
+        ports:
+        - name: wdp-app-port
+          containerPort: 80
+
+---
+#service for wordpress app
+apiVersion: v1
+kind: Service
+metadata:
+  name: wdp-app-svc
+  labels:
+    name: wdp-app-svc
+spec:
+  type: ClusterIP
+  selector:
+    name: wdp-app-po
+  ports:
+  - port: 8080
+    targetPort: wdp-app-port
+
+---
+#ingress for wordpress app
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wdp-app-ingress
+  labels:
+    name: wdp-app-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: wdp.188.166.198.130.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wdp-app-svc
+            port: 
+              number: 8080
